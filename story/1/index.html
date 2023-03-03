@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>PastekoLore</title>
-    <link rel="stylesheet" href="../../style.css" />
+    <link rel="stylesheet" href="/style.css" />
 </head>
 
 <body>
@@ -18,7 +18,7 @@
 
     <script>
         document.body.style.backgroundColor = 'black';
-        let video = document.getElementById('vid');
+        const video = document.getElementById('vid');
         video.currentTime = 0.05;
 
         function blackToHex(b) {
@@ -31,8 +31,8 @@
             else if (video.currentTime > 13.5)
                 document.body.style.backgroundColor = 'white';
             else {
-                let progress = (video.currentTime - 6.3) / 7.2;
-                let color = Math.floor(progress * 255);
+                const progress = (video.currentTime - 6.3) / 7.2;
+                const color = Math.floor(progress * 255);
                 document.body.style.backgroundColor = blackToHex(color);
             }
         }
@@ -50,7 +50,7 @@
 
 </div>
 
-<iframe src="../../header.html" onload="this.before((this.contentDocument.body||this.contentDocument).children[0]);this.remove()"></iframe>
+<iframe src="/footer.html" onload="this.before((this.contentDocument.body||this.contentDocument).children[0]);this.remove()"></iframe>
 
 </body>
 </html>

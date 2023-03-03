@@ -28,7 +28,16 @@ a {
 	font-size: 24px;
 }
 
+strong {
+	font-size:0.950em;
+	color: navy;
+}
+
 video {
+	width: 100%
+}
+
+img {
 	width: 100%
 }
 
