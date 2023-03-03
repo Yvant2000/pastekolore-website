@@ -1,0 +1,42 @@
+/* General formatting */
+
+.hs-wrapper {
+	background-color:#eee;
+}
+.hs-text {
+	font-family:"Courier New",monospace;
+	font-weight:bold;
+	font-size:0.875em;
+	color:black;
+	text-align: center;
+}
+.hs-pesterlog {
+	padding:1.125em  2.125em;
+	border:0.0675em dashed gray;
+	display:inline-block;
+	width:37.923em;
+	text-align:left;
+}
+.hs-line, .hs-children-lines > * {
+	display:block;
+	margin-top:0;
+	margin-bottom:0;
+	padding-top:0;
+	padding-bottom:0;
+}
+.hs-pesterlog-action {
+	color:black;
+}
+.hs-pesterlog-action::before {
+	content:"-- ";
+}
+.hs-pesterlog-action::after {
+	content:" --";
+}
+.hs-clear-below {
+	margin-bottom:1em;
+}
+.hs-clear-above {
+	margin-top:1em;
+}
+
