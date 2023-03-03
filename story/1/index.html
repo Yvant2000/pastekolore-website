@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <title>PastekoLore</title>
@@ -7,22 +7,26 @@
 </head>
 
 <body>
-    <div class="hs-wrapper hs-text" style="max-width:650px; margin:0 auto">
-        <h1>NOUVELLE PARTIE</h1>
 
-        <video width="650" id="vid" autoplay controls>
-            <source src="1.mp4" type="video/mp4">
-            Error while loading video.
-        </video>
+<div class="hs-wrapper hs-text" style="max-width:650px; margin:0 auto">
+    <h1>NOUVELLE PARTIE</h1>
 
-        <p>Te voilà dans une petite cellule.<br><br>
+    <video id="vid" autoplay controls>
+        <source src="1.mp4" type="video/mp4">
+        Error while loading video.
+    </video>
 
-            Certains disent que tu as la vie devant toi, mais actuellement tu as surtout des barreaux en métal.<br><br>
+    <p>Te voilà dans une petite cellule.<br><br>
 
-            Que va tu faire ?</p>
+        Certains disent que tu as la vie devant toi, mais actuellement tu as surtout des barreaux en métal.<br><br>
 
-        <h1>> <a href="./story/2">Pastek: Fouille tes poches.</a></h1>
+        Que va tu faire ?</p>
 
-    </div>
+    <h1>> <a href="../2">Pastek: Fouille tes poches.</a></h1>
+
+</div>
+
+<iframe src="../../header.html" onload="this.before((this.contentDocument.body||this.contentDocument).children[0]);this.remove()"></iframe>
+
 </body>
 </html>
