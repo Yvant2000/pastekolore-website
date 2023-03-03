@@ -11,10 +11,34 @@
 <div class="hs-wrapper hs-text" style="max-width:650px; margin:0 auto">
     <h1>NOUVELLE PARTIE</h1>
 
-    <video controls>
+    <video controls id="vid">
         <source src="1.mp4" type="video/mp4">
         Error while loading video.
     </video>
+
+    <script>
+        document.body.style.backgroundColor = 'black';
+        let video = document.getElementById('vid');
+        video.currentTime = 0.05;
+
+        function blackToHex(b) {
+            return "#" + ((1 << 24) + (b << 16) + (b << 8) + b).toString(16).slice(1);
+        }
+
+        function loop() {
+            if (video.currentTime < 6.3)
+                document.body.style.backgroundColor = 'black';
+            else if (video.currentTime > 13.5)
+                document.body.style.backgroundColor = 'white';
+            else {
+                let progress = (video.currentTime - 6.3) / 7.2;
+                let color = Math.floor(progress * 255);
+                document.body.style.backgroundColor = blackToHex(color);
+            }
+        }
+        setInterval(loop, 50)
+
+    </script>
 
     <p>
         Te voilà dans une petite cellule.<br><br>
