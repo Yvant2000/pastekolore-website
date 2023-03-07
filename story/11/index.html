@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>PastekoLore</title>
+    <link rel="stylesheet" href="/style.css" />
+    <script src="/utils.js"></script>
+</head>
+
+<body>
+<iframe src="/template.html" onload="this.before((this.contentDocument.body||this.contentDocument).children[0]);this.remove();
+    loadPage(
+        'Essaie d\'ouvrir la porte',
+        'Tu tentes <i class=\'spoiler\'>(très calmement)</i> d\'ouvrir la porte, pour finalement t\'apercevoir qu\'elle n\'a pas de poignée de ton coté.'
+        + '<br><br>Elle ne peut que s\'ouvrir de l\'extérieur.',
+        '> Utilise le miroir pour observer hors de la cellule.'
+    )"></iframe>
+</body>
+</html>
+

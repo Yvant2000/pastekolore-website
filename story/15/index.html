@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>PastekoLore</title>
+    <link rel="stylesheet" href="/style.css" />
+    <script src="/utils.js"></script>
+</head>
+
+<body>
+<iframe src="/template.html" onload="this.before((this.contentDocument.body||this.contentDocument).children[0]);this.remove();
+    loadPage(
+        'Essaie de creuser une galerie souterraine.',
+        'Tu attrapes fermement le <strong>Couteau de Table</strong> et commence à creuser, avant de t\'apercevoir que le sol est en pierre !<br><br>'
+        + 'Le <strong>Couteau de Table</strong> se brisera probablement avant que tu ne sois sorti...',
+        ' '
+    )"></iframe>
+</body>
+</html>

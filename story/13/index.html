@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>PastekoLore</title>
+    <link rel="stylesheet" href="/style.css" />
+    <script src="/utils.js"></script>
+</head>
+
+<body>
+<iframe src="/template.html" onload="this.before((this.contentDocument.body||this.contentDocument).children[0]);this.remove();
+    loadPage(
+        'Propose au garde de visiter ta cellule.',
+        'Tu proposes gentiment au garde de visiter ta cellule, mais celui-ci n\'est pas particulièrement intéressé par la suggestion.<br><br>'+
+'En effet, il connaît déjà bien ta cellule, comme toutes les cellules de la prison d\'ailleurs.<br><br>'+
+'Ce sont toutes les mêmes salles rectangulaires, avec une seule fenêtre et une porte, un lit inconfortable avec son coussin sous lequel un miroir y est caché.<br><br>'+
+'Il va falloir plus que ça pour le convaincre d\' ouvrir la porte.',
+        '> Fait toi un masque avec le poster.'
+    )"></iframe>
+</body>
+</html>

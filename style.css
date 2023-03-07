@@ -64,3 +64,13 @@ img {
 	margin: 0 auto;
 	background-color:#eee;
 }
+
+
+.spoiler{
+	color: black;
+	background-color:black;
+}
+
+.spoiler:hover {
+	background-color:white;
+}
