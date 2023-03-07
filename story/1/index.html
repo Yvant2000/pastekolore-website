@@ -4,53 +4,56 @@
     <meta charset="UTF-8">
     <title>PastekoLore</title>
     <link rel="stylesheet" href="/style.css" />
+    <script src="/utils.js"></script>
 </head>
 
 <body>
 
-<div class="hs-wrapper hs-text" style="max-width:650px; margin:0 auto">
-    <h1>NOUVELLE PARTIE</h1>
+<video controls id="vid">
+    <source src="1.mp4" type="video/mp4">
+    Error while loading video.
+</video>
 
-    <video controls id="vid">
-        <source src="1.mp4" type="video/mp4">
-        Error while loading video.
-    </video>
+<iframe src="/template.html" onload="this.before((this.contentDocument.body||this.contentDocument).children[0]);this.remove();
+    loadPage(
+        'NOUVELLE PARTIE',
+        '            Te voilà dans une petite cellule.<br><br>\n'+
+'            Certains disent que tu as la vie devant toi, mais actuellement tu as surtout des barreaux en métal.<br><br>\n'+
+'            Que va tu faire ?',
+        '> Pastek: Fouille tes poches.'
+    );
+    document.getElementById('new').remove();
+    document.getElementById('prev').remove();
+    const img = document.getElementById('img');
+    const vid = document.getElementById('vid');
+    img.parentNode.replaceChild(vid, img);
+"></iframe>
 
-    <script>
-        document.body.style.backgroundColor = 'black';
-        const video = document.getElementById('vid');
-        video.currentTime = 0.05;
+<script>
+    document.body.style.backgroundColor = 'black';
+    const video = document.getElementById('vid');
+    video.currentTime = 0.05;
 
-        function blackToHex(b) {
-            return "#" + ((1 << 24) + (b << 16) + (b << 8) + b).toString(16).slice(1);
+    function blackToHex(b) {
+        return "#" + ((1 << 24) + (b << 16) + (b << 8) + b).toString(16).slice(1);
+    }
+
+    function loop() {
+        if (video.currentTime < 6.3)
+            document.body.style.backgroundColor = 'black';
+        else if (video.currentTime > 13.5)
+            document.body.style.backgroundColor = 'white';
+        else {
+            const progress = (video.currentTime - 6.3) / 7.2;
+            const color = Math.floor(progress * 255);
+            document.body.style.backgroundColor = blackToHex(color);
         }
+    }
+    setInterval(loop, 50)
 
-        function loop() {
-            if (video.currentTime < 6.3)
-                document.body.style.backgroundColor = 'black';
-            else if (video.currentTime > 13.5)
-                document.body.style.backgroundColor = 'white';
-            else {
-                const progress = (video.currentTime - 6.3) / 7.2;
-                const color = Math.floor(progress * 255);
-                document.body.style.backgroundColor = blackToHex(color);
-            }
-        }
-        setInterval(loop, 50)
-
-    </script>
-
-    <p>
-        Te voilà dans une petite cellule.<br><br>
-        Certains disent que tu as la vie devant toi, mais actuellement tu as surtout des barreaux en métal.<br><br>
-        Que va tu faire ?
-    </p>
-
-    <a href="../2">> Pastek: Fouille tes poches.</a>
-
-</div>
-
-<iframe src="/footer.html" onload="this.before((this.contentDocument.body||this.contentDocument).children[0]);this.remove()"></iframe>
-
+</script>
 </body>
 </html>
+
+
+

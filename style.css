@@ -1,5 +1,9 @@
 /* General formatting */
 
+body {
+	background-color: #535353;
+}
+
 h1 {
 	line-height: 1.15;
 	font-size: 32px;
@@ -41,9 +45,6 @@ img {
 	width: 100%
 }
 
-.hs-wrapper {
-	background-color:#eee;
-}
 .hs-text {
 	font-family:"Courier New",monospace;
 	font-weight:bold;
@@ -51,3 +52,15 @@ img {
 	color:black;
 }
 
+.gray_wrapper {
+	max-width: 900px;
+	background-color: #C6C6C6;
+	margin: 0 auto;
+	padding: 5px 15px;
+}
+
+.hs-wrapper {
+	max-width: 650px;
+	margin: 0 auto;
+	background-color:#eee;
+}

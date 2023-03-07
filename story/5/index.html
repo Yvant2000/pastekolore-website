@@ -4,24 +4,15 @@
     <meta charset="UTF-8">
     <title>PastekoLore</title>
     <link rel="stylesheet" href="/style.css" />
+    <script src="/utils.js"></script>
 </head>
 
 <body>
-
-<div class="hs-wrapper hs-text" style="max-width:650px; margin:0 auto">
-    <h1>Analyse l'intégralité de la pièce ou tu te trouve.</h1> <!-- Change Title here -->
-
-    <img src="5.png" alt=""> <!-- Change Image here -->
-
-    <p> <!-- Change Text here -->
-        Tu observes plus attentivement ton environnement: une cellule tout ce qu'il y a de plus... classique.
-    </p>
-
-    <a href="../6">> Decoupe ta tête avec le couteau.</a> <!-- Change Link and Title here -->
-
-</div>
-
-<iframe src="/footer.html" onload="this.before((this.contentDocument.body||this.contentDocument).children[0]);this.remove()"></iframe>
-
+<iframe src="/template.html" onload="this.before((this.contentDocument.body||this.contentDocument).children[0]);this.remove();
+    loadPage(
+        'Analyse l\'intégralité de la pièce ou tu te trouve.',
+        'Tu observes plus attentivement ton environnement: une cellule tout ce qu\'il y a de plus... classique.',
+        '> Decoupe ta tête avec le couteau.'
+    )"></iframe>
 </body>
 </html>

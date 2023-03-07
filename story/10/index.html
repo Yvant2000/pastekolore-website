@@ -4,30 +4,22 @@
     <meta charset="UTF-8">
     <title>PastekoLore</title>
     <link rel="stylesheet" href="/style.css" />
+    <script src="/utils.js"></script>
 </head>
 
 <body>
-
-<div class="hs-wrapper hs-text" style="max-width:650px; margin:0 auto">
-    <h1>Fabrique une corde avec la plante et attache le coussin dans ton dos.</h1> <!-- Change Title here -->
-
-    <img src="10.png" alt=""> <!-- Change Image here -->
-
-    <p> <!-- Change Text here -->
-        Tu envisages de t'enfuir par la fenêtre maintenant que tu y as retiré un <del>tuyau</del> barreau.<br><br>
-
-        Tu <i>équipes</i> en <strong>Armure</strong> le <strong>Petit Coussin</strong> en l'accrochant sur ton dos.<br><br>
-
-        Tu tentes aussi de <i>fabriquer</i> de la corde avec la <strong>Plante Verte</strong>, mais tu te rends compte que tu n'as aucune idée de comment faire ça.<br><br>
-        De toute façon, les feuilles ne seraient pas suffisamment solides pour produire une corde qui pourrait soutenir ton poids.<br><br>
-
-        Tu <i>obtiens</i> des <strong>Feuilles de Plante Verte</strong> que tu t'empresse de ranger dans ton <strong>Inventaire</strong>.
-    </p>
-
-<!--    <a href="../10">> Fabrique une corde avec la plante et attache le coussin dans ton dos.</a> &lt;!&ndash; Change Link and Title here &ndash;&gt;-->
-</div>
-
-<iframe src="/footer.html" onload="this.before((this.contentDocument.body||this.contentDocument).children[0]);this.remove()"></iframe>
-
+<iframe src="/template.html" onload="this.before((this.contentDocument.body||this.contentDocument).children[0]);this.remove();
+    loadPage(
+        'Fabrique une corde avec la plante et attache le coussin dans ton dos.',
+        'Tu envisages de t\'enfuir par la fenêtre maintenant que tu y as retiré un <del>tuyau</del> barreau.<br><br>\n'+
+'\n'+
+'        Tu <i>équipes</i> en <strong>Armure</strong> le <strong>Petit Coussin</strong> en l\'accrochant sur ton dos.<br><br>\n'+
+'\n'+
+'        Tu tentes aussi de <i>fabriquer</i> de la corde avec la <strong>Plante Verte</strong>, mais tu te rends compte que tu n\'as aucune idée de comment faire ça.<br><br>\n'+
+'        De toute façon, les feuilles ne seraient pas suffisamment solides pour produire une corde qui pourrait soutenir ton poids.<br><br>\n'+
+'\n'+
+'        Tu <i>obtiens</i> des <strong>Feuilles de Plante Verte</strong> que tu t\'empresse de ranger dans ton <strong>Inventaire</strong>.',
+        ''
+    )"></iframe>
 </body>
 </html>

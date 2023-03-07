@@ -4,25 +4,24 @@
     <meta charset="UTF-8">
     <title>PastekoLore</title>
     <link rel="stylesheet" href="/style.css" />
+    <script src="/utils.js"></script>
 </head>
+
 <body>
-
-<div class="hs-wrapper hs-text" style="max-width:650px; margin:0 auto">
-    <h1>Erreur 404 : Page non trouvée</h1>
-
-<!--    <img src=".png" alt="">-->
-
-    <p>
-        Oups <br><br>
-        Il semblerait que cette page n'existe pas...<br><br>
-        Que va tu faire à présent ?
-    </p>
-
-    <a href="/">> Recommencer une nouvelle partie</a>
-
-</div>
-
-<iframe src="/footer.html" onload="this.before((this.contentDocument.body||this.contentDocument).children[0]);this.remove()"></iframe>
-
+<iframe src="/template.html" onload="this.before((this.contentDocument.body||this.contentDocument).children[0]);this.remove();
+    loadPage(
+        'Erreur 404 : Page non trouvée',
+        '        Oups <br><br>\n'+
+'        Il semblerait que cette page n\'existe pas...<br><br>\n'+
+'        Que va tu faire à présent ?',
+        '> Recommencer une nouvelle partie'
+    );
+    const next = document.getElementById('next');
+    next.setAttribute('href', '/index.html');
+    next.setAttribute('onclick', '');
+    document.getElementById('new').remove();
+    document.getElementById('prev').remove();
+"></iframe>
 </body>
 </html>
+<body>
