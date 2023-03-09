@@ -15,8 +15,8 @@
 
 <iframe src="/template.html" onload="this.before((this.contentDocument.body||this.contentDocument).children[0]);this.remove();
     loadPage(
-        'Pastek : En guarde!',
-        'Le guarde de ta cellule te fait face. Il va falloir passer en force !',
+        'Pastek : En garde!',
+        'Clique sur START pour débuter.',
         ' '
     );
     const img = document.getElementById('img');
@@ -33,11 +33,32 @@
 let canvas = document.getElementById("canvas");
 let ctx = canvas.getContext("2d");
 
+let scene = document.createElement("canvas");
+scene.width = canvas.width;
+scene.height = canvas.height;
+let scene_ctx = scene.getContext("2d");
+
+let zoom = 1.5;
+let shift_x = 0;
+let shift_y = 0;
+
+let __zoom;
+let __shift_x;
+let __shift_y;
+let __camera_move_progression;
+let intervalCamera;
+
 let bg_music = new Audio();
 let bg_loading = new Image();
 let bg_image = new Image();
 let pastek_idle = [new Image()];
 let guard_idle = [new Image()];
+
+let paragraph;
+let __nex_paragraph = "";
+let __delete_text = false;
+let intervalUpdateParagraph;
+
 
 bg_music.src = "./goofy-ahh-fight.mp3";
 bg_loading.src = "./loading.png";
@@ -46,39 +67,115 @@ pastek_idle[0].src = "./pastek0.png";
 guard_idle[0].src = "./guard0.png";
 
 bg_music.volume = 0.0;
+let intervalMusicVolume;
 
-document.onclick = () => bg_music.play();
+document.onclick = () => {
+    FadeInMusic();
+    ZoomMoveCamera(1.0, 0, 0);
+    paragraph = document.getElementById("paragraph")
+    changeParagraph("Le garde te bloque la sortie!<br><br>Il va falloir passer en force.");
+};
 
-pastek_idle[0].onclick = () => console.log("test");
+
+/**
+ * @param {string} newText
+ */
+function changeParagraph(newText) {
+    __nex_paragraph = newText;
+    __delete_text = true;
+    intervalUpdateParagraph = setInterval(__updateParagraph, 25);
+}
+
+function __updateParagraph() {
+    let length = paragraph.innerHTML.length;
+    if (__delete_text)
+        if (length > 0)
+            paragraph.innerHTML = paragraph.innerHTML.slice(0, -1);
+        else
+            __delete_text = false;
+    else if (length < __nex_paragraph.length){
+        console.log(__nex_paragraph.slice(0, length + 1));
+        paragraph.innerHTML = __nex_paragraph.slice(0, length + 1);
+    } else
+        clearInterval(intervalUpdateParagraph);
+}
+
+function __updateMusicVolume(){
+    if (bg_music.volume < 1.0){  // Fading intro
+        try {
+            bg_music.volume += 0.01; // Fading Music
+        } catch {
+            bg_music.volume = 1;
+            clearInterval(intervalMusicVolume);
+        }  // limit
+    }
+}
 
 
+function __updateCameraMove() {
+
+    __camera_move_progression += 0.02;
+    if (__camera_move_progression >= 1.0){
+        zoom = __zoom;
+        shift_x = __shift_x;
+        shift_y = __shift_y;
+        return clearInterval(intervalCamera);
+    }
+
+    zoom += (__zoom - zoom) * __camera_move_progression;
+    shift_x += (__shift_x - shift_x) * __camera_move_progression;
+    shift_y += (__shift_y - shift_y) * __camera_move_progression;
+}
+
+function ZoomMoveCamera(_zoom = 1.0, _shift_x = 0, _shift_y = 0, duration = 1.0){
+    __zoom = _zoom;
+    __shift_x = _shift_x;
+    __shift_y = _shift_y;
+    __camera_move_progression = 0.0;
+    intervalCamera = setInterval(__updateCameraMove, 20 * duration);
+}
+
+function FadeInMusic() {
+    bg_music.play();
+    intervalMusicVolume = setInterval(__updateMusicVolume, 30);
+}
+
+/**
+ * @param {HTMLImageElement | SVGImageElement | HTMLVideoElement | HTMLCanvasElement | ImageBitmap} image
+ * @param {number} pos_x
+ * @param {number} pos_y
+ * @param {number} transparency
+ */
 function drawTransparentImage(image, pos_x, pos_y, transparency) {
-    ctx.globalAlpha = transparency;
-    ctx.drawImage(image, pos_x, pos_y);
-    ctx.globalAlpha = 1.0;
+    if (transparency === 0.0)
+        return;
+    scene_ctx.globalAlpha = transparency;
+    scene_ctx.drawImage(image, pos_x, pos_y);
+    scene_ctx.globalAlpha = 1.0;
+}
+
+function updateScreen(){
+    let width = canvas.width;
+    let height = canvas.height;
+    let new_width = width * zoom;
+    let new_height = height * zoom;
+
+    ctx.drawImage(scene, width / 2 - new_width / 2, height / 2 - new_height / 2, new_width, new_height );
 }
 
 
 function MainLoop(){
 
-    if (bg_music.paused)
-        return ctx.drawImage(bg_loading, 0, 0);
+    scene_ctx.drawImage(bg_image, 0, 0);
+    scene_ctx.drawImage(pastek_idle[0], 30, 80);
+    scene_ctx.drawImage(guard_idle[0], 220, 80);
 
-    ctx.drawImage(bg_image, 0, 0);
-    ctx.drawImage(pastek_idle[0], 30, 80);
-    ctx.drawImage(guard_idle[0], 220, 80);
+    drawTransparentImage(bg_loading, 0, 0, 1.0 - bg_music.volume);  // Fading image
 
-    if (bg_music.volume < 1.0){  // Fading intro
-        try {
-            bg_music.volume += 0.01; // Fading Music
-            drawTransparentImage(bg_loading, 0, 0, 1.0 - bg_music.volume);  // Fading image
-        } catch {bg_music.volume = 1;}  // limit
-    }
-
+    updateScreen();
 }
 
 setInterval(MainLoop, 30);
-
 
 
 </script>
