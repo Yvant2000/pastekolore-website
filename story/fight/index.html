@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>PastekoLore</title>
+    <link rel="stylesheet" href="/style.css" />
+    <script src="/utils.js"></script>
+</head>
+
+
+
+<body>
+
+<canvas id="canvas" width="300" height="225"></canvas>
+
+<iframe src="/template.html" onload="this.before((this.contentDocument.body||this.contentDocument).children[0]);this.remove();
+    loadPage(
+        'Pastek : En guarde!',
+        'Le guarde de ta cellule te fait face. Il va falloir passer en force !',
+        ' '
+    );
+    const img = document.getElementById('img');
+    const canvas = document.getElementById('canvas');
+    img.parentNode.replaceChild(canvas, img);
+"></iframe>
+
+<script>
+    let canvas = document.getElementById("canvas");
+    let ctx = canvas.getContext("2d")
+
+    function MainLoop(){
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    let loop = setInterval(MainLoop, 30);
+
+</script>
+
+</body>
+</html>
