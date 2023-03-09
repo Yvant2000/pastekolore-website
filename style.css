@@ -62,13 +62,14 @@ img {
 	max-width: 900px;
 	background-color: #C6C6C6;
 	margin: 0 auto;
-	padding: 5px 15px;
+	padding: 5px 15px 25px;
 }
 
 .hs-wrapper {
 	max-width: 650px;
 	margin: 0 auto;
 	background-color:#eee;
+	padding-bottom: 20px;
 }
 
 

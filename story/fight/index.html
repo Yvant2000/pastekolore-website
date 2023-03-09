@@ -22,17 +22,64 @@
     const img = document.getElementById('img');
     const canvas = document.getElementById('canvas');
     img.parentNode.replaceChild(canvas, img);
+    const next = document.getElementById('next');
+    next.hidden = true;
 "></iframe>
 
 <script>
-    let canvas = document.getElementById("canvas");
-    let ctx = canvas.getContext("2d")
 
-    function MainLoop(){
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+
+let canvas = document.getElementById("canvas");
+let ctx = canvas.getContext("2d");
+
+let bg_music = new Audio();
+let bg_loading = new Image();
+let bg_image = new Image();
+let pastek_idle = [new Image()];
+let guard_idle = [new Image()];
+
+bg_music.src = "./goofy-ahh-fight.mp3";
+bg_loading.src = "./loading.png";
+bg_image.src = "./bg.png";
+pastek_idle[0].src = "./pastek0.png";
+guard_idle[0].src = "./guard0.png";
+
+bg_music.volume = 0.0;
+
+document.onclick = () => bg_music.play();
+
+pastek_idle[0].onclick = () => console.log("test");
+
+
+function drawTransparentImage(image, pos_x, pos_y, transparency) {
+    ctx.globalAlpha = transparency;
+    ctx.drawImage(image, pos_x, pos_y);
+    ctx.globalAlpha = 1.0;
+}
+
+
+function MainLoop(){
+
+    if (bg_music.paused)
+        return ctx.drawImage(bg_loading, 0, 0);
+
+    ctx.drawImage(bg_image, 0, 0);
+    ctx.drawImage(pastek_idle[0], 30, 80);
+    ctx.drawImage(guard_idle[0], 220, 80);
+
+    if (bg_music.volume < 1.0){  // Fading intro
+        try {
+            bg_music.volume += 0.01; // Fading Music
+            drawTransparentImage(bg_loading, 0, 0, 1.0 - bg_music.volume);  // Fading image
+        } catch {bg_music.volume = 1;}  // limit
     }
 
-    let loop = setInterval(MainLoop, 30);
+}
+
+setInterval(MainLoop, 30);
+
+
 
 </script>
 
