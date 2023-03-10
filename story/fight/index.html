@@ -38,7 +38,7 @@ scene.width = canvas.width;
 scene.height = canvas.height;
 let scene_ctx = scene.getContext("2d");
 
-let zoom = 1.5;
+let zoom = 1.0;
 let shift_x = 0;
 let shift_y = 0;
 
@@ -69,9 +69,10 @@ guard_idle[0].src = "./guard0.png";
 bg_music.volume = 0.0;
 let intervalMusicVolume;
 
+
 document.onclick = () => {
     FadeInMusic();
-    ZoomMoveCamera(1.0, 0, 0);
+    ZoomMoveCamera(1.8, -80, 0);
     paragraph = document.getElementById("paragraph")
     changeParagraph("Le garde te bloque la sortie!<br><br>Il va falloir passer en force.");
 };
@@ -93,17 +94,16 @@ function __updateParagraph() {
             paragraph.innerHTML = paragraph.innerHTML.slice(0, -1);
         else
             __delete_text = false;
-    else if (length < __nex_paragraph.length){
-        console.log(__nex_paragraph.slice(0, length + 1));
+    else if (length < __nex_paragraph.length)
         paragraph.innerHTML = __nex_paragraph.slice(0, length + 1);
-    } else
+    else
         clearInterval(intervalUpdateParagraph);
 }
 
 function __updateMusicVolume(){
     if (bg_music.volume < 1.0){  // Fading intro
         try {
-            bg_music.volume += 0.01; // Fading Music
+            bg_music.volume += 0.015; // Fading Music
         } catch {
             bg_music.volume = 1;
             clearInterval(intervalMusicVolume);
@@ -160,7 +160,8 @@ function updateScreen(){
     let new_width = width * zoom;
     let new_height = height * zoom;
 
-    ctx.drawImage(scene, width / 2 - new_width / 2, height / 2 - new_height / 2, new_width, new_height );
+    ctx.drawImage(
+        scene, width / 2 - new_width / 2 - shift_x, height / 2 - new_height / 2 - shift_y, new_width, new_height );
 }
 
 
