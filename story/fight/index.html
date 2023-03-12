@@ -61,17 +61,47 @@ let intervalCamera = undefined;  // To store the interval of the camera movement
 const bg_music = new Audio();
 const bg_loading = new Image();
 const bg_image = new Image();
-const pastek_idle = [new Image()];
+const pastek = {
+    anim: {
+        idle: [new Image(),],
+    },
+    x: 30,
+    y: 80,
+    index: 0,
+    current: undefined,
+    flip: false,
+    getSprite(){
+        if (this.index >= this.current.length) {
+            this.index = 0;
+            if (this.current === this.anim.attack) // attack animation is only played once
+                this.current = this.anim.idle;
+        }
+        //js flip image
+        return this.current[this.index];
+    }
+}
 const guard_idle = [new Image()];
 const cursor = new Image();
+const button = {
+    img: [new Image(),],
+    x: 85,
+    y: 70,
+    active: true,
+    index: 0,
+    right(){return this.x + this.img[this.index].width},
+    bottom(){return this.y + this.img[this.index].height},
+}
+pastek.current = pastek.anim.idle;
 
 bg_music.loop = true;
 bg_music.src = "./goofy-ahh-fight.mp3";
 bg_loading.src = "./loading.png";
 bg_image.src = "./bg.png";
-pastek_idle[0].src = "./pastek0.png";
+pastek.anim.idle[0].src = "./pastek0.png";
+
 guard_idle[0].src = "./guard0.png";
 cursor.src = "./cursor.png";
+button.img[0].src = "./buttons/attack.png";
 
 let paragraph;
 let __next_paragraph = "";
@@ -83,6 +113,7 @@ let intervalUpdateScreenShake = undefined;
 bg_music.volume = 0.0;
 let intervalMusicVolume = undefined;
 
+let intervalAttackAnimation = undefined;
 
 canvas.onclick = () => {
     if (bg_music.paused) { // init
@@ -98,7 +129,10 @@ canvas.onclick = () => {
         return;
     }
 
-    todo();
+    if (button.active
+        && (button.x <= mouse.x && mouse.x <= button.right())
+        && (button.y <= mouse.y && mouse.y <= button.bottom()))
+        return __mouseClickEvent();
 };
 
 canvas.onmousemove = (evt) => {
@@ -114,10 +148,57 @@ canvas.onmouseout = () => {
     mouse.hover = false;
 }
 
+
+
+function __pastekAttackAnimation(){
+    if (pastek.flip) {
+        if (pastek.x > 30) {
+            pastek.x -= 2;
+            return;
+        }
+        clearInterval(intervalAttackAnimation);
+        intervalAttackAnimation = undefined;
+        pastek.flip = false;
+        pastek.x = 30;
+        return;
+    }
+    if (pastek.x < 150) {
+        // set pastek animation to walk
+        pastek.x += 2;
+        return;
+    }
+    if (pastek.x >= 150) {
+        ZoomMoveCamera(1.8, 120, 0, 0.5);
+        stopScreenShake();
+        // set pastek animation to attack
+        if (camera.zoom === 1.8) {
+            ZoomMoveCamera(1.0, 0, 0, 1.0);
+            startScreenShake();
+            pastek.flip = true;
+        }
+    }
+}
+
+
+
+
+function __mouseClickEvent() {
+    button.active = false;
+    console.log("click");
+    switch (button.index) {
+        default:
+            ZoomMoveCamera(1.0, 0, 0, 1.0);
+            changeParagraph("Tu lances une attaque sur le garde, assénant d'importants dégâts à celui-ci avec ton <strong>Épée de Fortune</strong>!");
+            intervalAttackAnimation = setInterval(__pastekAttackAnimation, 30);
+            break;
+    }
+}
+
 function __updateScreenShake(){
     const progression = bg_music.currentTime;
 
-    if (progression < 6.0 || (16.4 < progression && progression < 17.9) || (23.8 < progression && progression < 25.4)  // If the percs aren't playing
+    // If the percutions aren't playing
+    if (progression < 6.0 || (16.4 < progression && progression < 17.9) || (23.8 < progression && progression < 25.4)
         || (71.2 < progression)) {
         gray_wrapper.style.maxWidth = "900px";
         return;
@@ -127,16 +208,22 @@ function __updateScreenShake(){
     const m_progression = progression * 1000; // convert to milliseconds
     const zoom_strength = Math.abs(Math.tan((m_progression / milliseconds_per_beat) * (Math.PI / 2)));
 
-    camera.zoom = __camera.zoom + Math.min(0.1, zoom_strength / 100);
+    if (intervalCamera === undefined)
+        camera.zoom = __camera.zoom + Math.min(0.1, zoom_strength / 100);
     gray_wrapper.style.maxWidth = 900 + Math.min(60, zoom_strength * 10) + "px";
 }
 
 function startScreenShake(){
+    if (intervalUpdateScreenShake !== undefined)
+        return;
     intervalUpdateScreenShake = setInterval(__updateScreenShake, 20);
 }
 
 function stopScreenShake(){
+    if (intervalUpdateScreenShake === undefined)
+        return;
     clearInterval(intervalUpdateScreenShake);
+    intervalUpdateScreenShake = undefined;
 }
 
 
@@ -147,6 +234,7 @@ function __sizeUpWrapper() {
 
     wrapper.style.maxWidth = "900px";
     clearInterval(intervalWrapperSizeUp);
+    intervalWrapperSizeUp = undefined;
 }
 
 
@@ -173,12 +261,15 @@ function __updateParagraph() {
     }
 
     clearInterval(intervalUpdateParagraph);
+    intervalUpdateParagraph = undefined;
 }
 
 /**
  * @param {string} newText
  */
 function changeParagraph(newText) {
+    if (intervalUpdateParagraph !== undefined)
+        return;
     __next_paragraph = newText;
     __delete_text = true;
     intervalUpdateParagraph = setInterval(__updateParagraph, 25);
@@ -191,13 +282,28 @@ function __increaseMusicVolume(){
     } catch {
         bg_music.volume = 1;
         clearInterval(intervalMusicVolume);
+        intervalMusicVolume = undefined;
     }
+}
+
+
+/**
+ * @param {number} x
+ * @return {number}
+ */
+function easeInOutCubic(x) {
+    return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+}
+
+function lerp(a, b, t) {
+    return a + (b - a) * t;
 }
 
 
 function __updateCameraMove() {
 
     __camera.progression += 0.02;
+
     if (__camera.progression >= 1.0){
         if (__camera.zoom !== undefined)
             camera.zoom = __camera.zoom;
@@ -205,14 +311,16 @@ function __updateCameraMove() {
             camera.x = __camera.x;
         if (__camera.y !== undefined)
             camera.y = __camera.y;
-        return clearInterval(intervalCamera);
+        clearInterval(intervalCamera);
+        return intervalCamera = undefined;
     }
+
     if (__camera.zoom !== undefined)
-        camera.zoom = __camera.start.zoom + (__camera.zoom - __camera.start.zoom) * __camera.progression;
+        camera.zoom = lerp(__camera.start.zoom, __camera.zoom, easeInOutCubic(__camera.progression));
     if (__camera.x !== undefined)
-        camera.x = __camera.start.x + (__camera.x - __camera.start.x) * __camera.progression;
+        camera.x = lerp(__camera.start.x, __camera.x, easeInOutCubic(__camera.progression));
     if (__camera.y !== undefined)
-        camera.y = __camera.start.y + (__camera.y - __camera.start.y) * __camera.progression;
+        camera.y = lerp(__camera.start.y, __camera.y, easeInOutCubic(__camera.progression));
 
     /*
         camera.zoom += (__camera.zoom - camera.zoom) * __camera.progression;
@@ -228,6 +336,15 @@ function __updateCameraMove() {
  * @param {number | undefined} duration
  */
 function ZoomMoveCamera(_zoom = undefined, _shift_x = undefined, _shift_y = undefined, duration = 1.0){
+
+    console.log("called " + _zoom + " " + _shift_x + " " + _shift_y +" " + duration );
+
+    // If the camera is already in the position, don't start animation
+    if((_zoom === undefined || _zoom === __camera.zoom)
+        && (_shift_x === undefined || _shift_x === __camera.x)
+        && (_shift_y === undefined || _shift_y === __camera.y))
+        return;
+
     __camera.zoom = _zoom;
     __camera.x = _shift_x;
     __camera.y = _shift_y;
@@ -235,10 +352,16 @@ function ZoomMoveCamera(_zoom = undefined, _shift_x = undefined, _shift_y = unde
     __camera.start.x = camera.x;
     __camera.start.y = camera.y;
     __camera.start.zoom = camera.zoom;
+
+    if (intervalCamera !== undefined)  // If animation already running, don't start another one
+        clearInterval(__updateCameraMove);
+
     intervalCamera = setInterval(__updateCameraMove, 20 * duration);
 }
 
 function FadeInMusic() {
+    if (intervalMusicVolume !== undefined)
+        return;
     bg_music.play();
     intervalMusicVolume = setInterval(__increaseMusicVolume, 30);
 }
@@ -277,12 +400,20 @@ function updateMousePos() {
     mouse.y = canvas.height * (((__mouse_pos.y - rect.top) / true_height - 1/2) / camera.zoom + 1/2) + camera.y/camera.zoom;
 }
 
+function animateImages() {
+    pastek.index++;
+}
+
 
 function MainLoop(){
 
     scene_ctx.drawImage(bg_image, 0, 0);
-    scene_ctx.drawImage(pastek_idle[0], 30, 80);
+    const p_sprite = pastek.getSprite();
+    scene_ctx.drawImage(p_sprite, pastek.x, pastek.y);
     scene_ctx.drawImage(guard_idle[0], 220, 80);
+
+    if (button.active)
+        scene_ctx.drawImage(button.img[button.index], button.x, button.y);
 
     drawTransparentImage(bg_loading, 0, 0, 1.0 - bg_music.volume);  // Fading image
 
@@ -294,7 +425,8 @@ function MainLoop(){
     updateScreen();
 }
 
-setInterval(MainLoop, 30);
+setInterval(MainLoop, 20);
+setInterval(animateImages, 80);
 
 
 </script>
