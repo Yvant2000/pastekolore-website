@@ -30,40 +30,40 @@
 
 <script>
 
+// To assign later
 let wrapper;
 let gray_wrapper;
 let intervalWrapperSizeUp;
 
-let canvas = document.getElementById("canvas");
-let ctx = canvas.getContext("2d");
-let canvas_style = window.getComputedStyle(canvas);
 
-let scene = document.createElement("canvas");
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+const canvas_style = window.getComputedStyle(canvas);
+
+const scene = document.createElement("canvas");
 scene.width = canvas.width;
 scene.height = canvas.height;
-let scene_ctx = scene.getContext("2d");
+const scene_ctx = scene.getContext("2d");
 
-let zoom = 1.0;
-let shift_x = 0;
-let shift_y = 0;
+const __mouse_pos = {x: 0, y: 0};
+const mouse = {x: 0, y: 0, hover: false};
 
-let __mouse_pos = {x: 0, y: 0};
-let mouse_pos = {x: 0, y: 0};
-let mouse_hover = false;
+const camera = {x: 0, y: 0, zoom: 1.0};
+const __camera = {
+    x: 0,
+    y: 0,
+    zoom: 1.0,
+    progression: 0.0,
+    start: {x: 0, y: 0, zoom: 1.0},
+}
+let intervalCamera = undefined;  // To store the interval of the camera movement
 
-let __zoom;
-let __shift_x;
-let __shift_y;
-let __camera_move_progression;
-let intervalCamera;
-
-
-let bg_music = new Audio();
-let bg_loading = new Image();
-let bg_image = new Image();
-let pastek_idle = [new Image()];
-let guard_idle = [new Image()];
-let cursor = new Image();
+const bg_music = new Audio();
+const bg_loading = new Image();
+const bg_image = new Image();
+const pastek_idle = [new Image()];
+const guard_idle = [new Image()];
+const cursor = new Image();
 
 bg_music.loop = true;
 bg_music.src = "./goofy-ahh-fight.mp3";
@@ -76,20 +76,21 @@ cursor.src = "./cursor.png";
 let paragraph;
 let __next_paragraph = "";
 let __delete_text = false;
-let intervalUpdateParagraph;
+let intervalUpdateParagraph = undefined;
 
-let intervalUpdateScreenShake;
+let intervalUpdateScreenShake = undefined;
 
 bg_music.volume = 0.0;
-let intervalMusicVolume;
+let intervalMusicVolume = undefined;
 
 
 canvas.onclick = () => {
-    if (bg_music.paused) {
+    if (bg_music.paused) { // init
         FadeInMusic();
         ZoomMoveCamera(1.8, -80, 0);
         paragraph = document.getElementById("paragraph")
         wrapper = document.getElementById("white_wrapper");
+        wrapper.style.maxWidth =  window.getComputedStyle(wrapper).maxWidth;
         gray_wrapper = document.getElementById("gray_wrapper");
         changeParagraph("Le garde te bloque la sortie!<br><br>Il va falloir passer en force.");
         intervalWrapperSizeUp = setInterval(__sizeUpWrapper, 30);
@@ -97,6 +98,7 @@ canvas.onclick = () => {
         return;
     }
 
+    todo();
 };
 
 canvas.onmousemove = (evt) => {
@@ -106,25 +108,27 @@ canvas.onmousemove = (evt) => {
 }
 
 canvas.onmouseover = () => {
-    mouse_hover = true;
+    mouse.hover = true;
 }
 canvas.onmouseout = () => {
-    mouse_hover = false;
+    mouse.hover = false;
 }
 
 function __updateScreenShake(){
-    let progression = bg_music.currentTime;
+    const progression = bg_music.currentTime;
 
-    if (progression < 6.0 || (16.4 < progression && progression < 17.9) || (23.8 < progression && progression < 25.4)
+    if (progression < 6.0 || (16.4 < progression && progression < 17.9) || (23.8 < progression && progression < 25.4)  // If the percs aren't playing
         || (71.2 < progression)) {
         gray_wrapper.style.maxWidth = "900px";
         return;
     }
 
     const milliseconds_per_beat = 375;
-    progression *= 1000; // convert to milliseconds
-    zoom = __zoom + Math.min(0.1, Math.abs(Math.tan(progression / milliseconds_per_beat * Math.PI / 2))/100);
-    gray_wrapper.style.maxWidth = 900 + Math.min(60, Math.abs(Math.tan(progression / milliseconds_per_beat * Math.PI / 2))*10) + "px";
+    const m_progression = progression * 1000; // convert to milliseconds
+    const zoom_strength = Math.abs(Math.tan((m_progression / milliseconds_per_beat) * (Math.PI / 2)));
+
+    camera.zoom = __camera.zoom + Math.min(0.1, zoom_strength / 100);
+    gray_wrapper.style.maxWidth = 900 + Math.min(60, zoom_strength * 10) + "px";
 }
 
 function startScreenShake(){
@@ -137,37 +141,38 @@ function stopScreenShake(){
 
 
 function __sizeUpWrapper() {
-    let max_width = window.getComputedStyle(wrapper).maxWidth;
-    let int_max_width = parseInt(max_width, 10);
-    if (int_max_width >= 900) {
-        wrapper.style.maxWidth = "900px";
-        clearInterval(intervalWrapperSizeUp);
-        return;
-    }
-    wrapper.style.maxWidth = int_max_width + 5 + "px";
+    const int_max_width = parseInt(wrapper.style.maxWidth, 10);
+    if (int_max_width < 900)
+        return wrapper.style.maxWidth = int_max_width + 5 + "px";
+
+    wrapper.style.maxWidth = "900px";
+    clearInterval(intervalWrapperSizeUp);
 }
 
 
 function __updateParagraph() {
     let length = paragraph.innerHTML.length;
-    if (__delete_text)
-        if (length > 0) {
-            let next = paragraph.innerHTML
-            if (next[next.length -1] === ">")
-                while (next[next.length -1] !== "<")
-                    next = next.slice(0, -1);
-            paragraph.innerHTML = next.slice(0, -2);
-        }
-        else
-            __delete_text = false;
-    else if (length < __next_paragraph.length) {
+
+    if (__delete_text) {
+        if (length <= 0)
+            return __delete_text = false;
+
+        let next = paragraph.innerHTML;
+        if (next[next.length - 1] === ">")
+            while (next[next.length - 1] !== "<")
+                next = next.slice(0, -1);
+
+        return paragraph.innerHTML = next.slice(0, -2);
+    }
+
+    if (length < __next_paragraph.length) {
         if (__next_paragraph[length] === "<")
             // noinspection StatementWithEmptyBodyJS
-            while (__next_paragraph[length++] !== ">");
-        paragraph.innerHTML = __next_paragraph.slice(0, length + 1);
+            while (__next_paragraph[length++] !== ">");  // this syntax while increment one more time after the loop is over
+        return paragraph.innerHTML = __next_paragraph.slice(0, length + 1);
     }
-    else
-        clearInterval(intervalUpdateParagraph);
+
+    clearInterval(intervalUpdateParagraph);
 }
 
 /**
@@ -180,44 +185,62 @@ function changeParagraph(newText) {
 }
 
 
-function __updateMusicVolume(){
-    if (bg_music.volume < 1.0){  // Fading intro
-        try {
-            bg_music.volume += 0.015; // Fading Music
-        } catch {
-            bg_music.volume = 1;
-            clearInterval(intervalMusicVolume);
-        }  // limit
+function __increaseMusicVolume(){
+    try {
+        bg_music.volume += 0.015; // Fading Music
+    } catch {
+        bg_music.volume = 1;
+        clearInterval(intervalMusicVolume);
     }
 }
 
 
 function __updateCameraMove() {
 
-    __camera_move_progression += 0.02;
-    if (__camera_move_progression >= 1.0){
-        zoom = __zoom;
-        shift_x = __shift_x;
-        shift_y = __shift_y;
+    __camera.progression += 0.02;
+    if (__camera.progression >= 1.0){
+        if (__camera.zoom !== undefined)
+            camera.zoom = __camera.zoom;
+        if (__camera.x !== undefined)
+            camera.x = __camera.x;
+        if (__camera.y !== undefined)
+            camera.y = __camera.y;
         return clearInterval(intervalCamera);
     }
+    if (__camera.zoom !== undefined)
+        camera.zoom = __camera.start.zoom + (__camera.zoom - __camera.start.zoom) * __camera.progression;
+    if (__camera.x !== undefined)
+        camera.x = __camera.start.x + (__camera.x - __camera.start.x) * __camera.progression;
+    if (__camera.y !== undefined)
+        camera.y = __camera.start.y + (__camera.y - __camera.start.y) * __camera.progression;
 
-    zoom += (__zoom - zoom) * __camera_move_progression;
-    shift_x += (__shift_x - shift_x) * __camera_move_progression;
-    shift_y += (__shift_y - shift_y) * __camera_move_progression;
+    /*
+        camera.zoom += (__camera.zoom - camera.zoom) * __camera.progression;
+        camera.x += (__camera.x - camera.x) * __camera.progression;
+        camera.y += (__camera.y - camera.y) * __camera.progression;
+     */
 }
 
-function ZoomMoveCamera(_zoom = 1.0, _shift_x = 0, _shift_y = 0, duration = 1.0){
-    __zoom = _zoom;
-    __shift_x = _shift_x;
-    __shift_y = _shift_y;
-    __camera_move_progression = 0.0;
+/**
+ * @param {number | undefined} _zoom
+ * @param {number | undefined} _shift_x
+ * @param {number | undefined} _shift_y
+ * @param {number | undefined} duration
+ */
+function ZoomMoveCamera(_zoom = undefined, _shift_x = undefined, _shift_y = undefined, duration = 1.0){
+    __camera.zoom = _zoom;
+    __camera.x = _shift_x;
+    __camera.y = _shift_y;
+    __camera.progression = 0.0;
+    __camera.start.x = camera.x;
+    __camera.start.y = camera.y;
+    __camera.start.zoom = camera.zoom;
     intervalCamera = setInterval(__updateCameraMove, 20 * duration);
 }
 
 function FadeInMusic() {
     bg_music.play();
-    intervalMusicVolume = setInterval(__updateMusicVolume, 30);
+    intervalMusicVolume = setInterval(__increaseMusicVolume, 30);
 }
 
 /**
@@ -229,33 +252,33 @@ function FadeInMusic() {
 function drawTransparentImage(image, pos_x, pos_y, transparency) {
     if (transparency === 0.0)
         return;
+
     scene_ctx.globalAlpha = transparency;
     scene_ctx.drawImage(image, pos_x, pos_y);
     scene_ctx.globalAlpha = 1.0;
 }
 
 function updateScreen(){
-    let width = canvas.width;
-    let height = canvas.height;
-    let new_width = width * zoom;
-    let new_height = height * zoom;
+    const width = canvas.width;
+    const height = canvas.height;
+    const new_width = width * camera.zoom;
+    const new_height = height * camera.zoom;
 
     ctx.drawImage(
-        scene, width / 2 - new_width / 2 - shift_x, height / 2 - new_height / 2 - shift_y, new_width, new_height );
+        scene, width / 2 - new_width / 2 - camera.x, height / 2 - new_height / 2 - camera.y, new_width, new_height );
 }
 
 
 function updateMousePos() {
-    let rect = canvas.getBoundingClientRect();
-    let true_width = parseInt(canvas_style.width, 10);
-    let true_height = parseInt(canvas_style.height, 10);
-    mouse_pos.x = canvas.width * (((__mouse_pos.x - rect.left) / true_width - 1/2) / zoom + 1/2) + shift_x/zoom;
-    mouse_pos.y = canvas.height * (((__mouse_pos.y - rect.top) / true_height - 1/2) / zoom + 1/2) + shift_y/zoom;
+    const rect = canvas.getBoundingClientRect();
+    const true_width = parseInt(canvas_style.width, 10);
+    const true_height = parseInt(canvas_style.height, 10);
+    mouse.x = canvas.width * (((__mouse_pos.x - rect.left) / true_width - 1/2) / camera.zoom + 1/2) + camera.x/camera.zoom;
+    mouse.y = canvas.height * (((__mouse_pos.y - rect.top) / true_height - 1/2) / camera.zoom + 1/2) + camera.y/camera.zoom;
 }
 
 
 function MainLoop(){
-
 
     scene_ctx.drawImage(bg_image, 0, 0);
     scene_ctx.drawImage(pastek_idle[0], 30, 80);
@@ -263,9 +286,9 @@ function MainLoop(){
 
     drawTransparentImage(bg_loading, 0, 0, 1.0 - bg_music.volume);  // Fading image
 
-    if (mouse_hover){
+    if (mouse.hover){
         updateMousePos();
-        scene_ctx.drawImage(cursor, mouse_pos.x, mouse_pos.y, cursor.width / zoom, cursor.height / zoom)
+        scene_ctx.drawImage(cursor, mouse.x, mouse.y, cursor.width / camera.zoom, cursor.height / camera.zoom)
     }
 
     updateScreen();
