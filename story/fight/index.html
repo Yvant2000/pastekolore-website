@@ -13,11 +13,14 @@
 
 <canvas id="canvas" width="300" height="225" hidden="hidden"></canvas>
 
-<iframe src="/template.html" onload="this.before((this.contentDocument.body||this.contentDocument).children[0]);this.remove();
+<iframe src="/template.html" onload="
+    this.before((this.contentDocument.body||this.contentDocument).children[0]);
+    this.remove();
+
     loadPage(
         'Pastek : En garde!',
         'Clique sur <strong>START</strong> pour débuter.',
-        ' '
+        '==>'
     );
     const img = document.getElementById('img');
     const canvas = document.getElementById('canvas');
@@ -80,7 +83,25 @@ const pastek = {
         return this.current[this.index];
     }
 }
-const guard_idle = [new Image()];
+const guard = {
+    anim: {
+        idle: [new Image(),],
+    },
+    x: 220,
+    y: 80,
+    index: 0,
+    current: undefined,
+    flip: false,
+    getSprite(){
+        if (this.index >= this.current.length) {
+            this.index = 0;
+            if (this.current === this.anim.attack) // attack animation is only played once
+                this.current = this.anim.idle;
+        }
+        //js flip image
+        return this.current[this.index];
+    }
+}
 const cursor = new Image();
 const button = {
     img: [new Image(),],
@@ -92,6 +113,7 @@ const button = {
     bottom(){return this.y + this.img[this.index].height},
 }
 pastek.current = pastek.anim.idle;
+guard.current = guard.anim.idle;
 
 bg_music.loop = true;
 bg_music.src = "./goofy-ahh-fight.mp3";
@@ -99,7 +121,7 @@ bg_loading.src = "./loading.png";
 bg_image.src = "./bg.png";
 pastek.anim.idle[0].src = "./pastek0.png";
 
-guard_idle[0].src = "./guard0.png";
+guard.anim.idle[0].src = "./guard0.png";
 cursor.src = "./cursor.png";
 button.img[0].src = "./buttons/attack.png";
 
@@ -152,21 +174,20 @@ canvas.onmouseout = () => {
 
 function __pastekAttackAnimation(){
     if (pastek.flip) {
-        if (pastek.x > 30) {
-            pastek.x -= 2;
-            return;
-        }
+        if (pastek.x > 30)
+            return pastek.x -= 2;
+
         clearInterval(intervalAttackAnimation);
-        intervalAttackAnimation = undefined;
+        intervalAttackAnimation = setInterval(__guardAttackAnimation, 30);
+        changeParagraph("Oh non ! Le garde contre-attaque ! 😟😲😬<br><br>Que devrais-tu faire ?");
         pastek.flip = false;
         pastek.x = 30;
         return;
     }
-    if (pastek.x < 150) {
+    if (pastek.x < 150)
         // set pastek animation to walk
-        pastek.x += 2;
-        return;
-    }
+        return pastek.x += 2;
+
     if (pastek.x >= 150) {
         ZoomMoveCamera(1.8, 120, 0, 0.5);
         stopScreenShake();
@@ -175,6 +196,32 @@ function __pastekAttackAnimation(){
             ZoomMoveCamera(1.0, 0, 0, 1.0);
             startScreenShake();
             pastek.flip = true;
+        }
+    }
+}
+
+function __guardAttackAnimation(){
+    if (guard.flip) {
+        if (guard.x < 220)
+            return guard.x += 2;
+
+        clearInterval(intervalAttackAnimation);
+        intervalAttackAnimation = undefined;
+        guard.flip = false;
+        guard.x = 220;
+        button.active = true;
+        return;
+    }
+    if (guard.x > 100)
+        return guard.x -= 2;
+
+    if (guard.x <= 100) {
+        ZoomMoveCamera(1.8, -80, 0, 0.5);
+        stopScreenShake();
+        if (camera.zoom === 1.8) {
+            ZoomMoveCamera(1.0, 0, 0, 1.0);
+            startScreenShake();
+            guard.flip = true;
         }
     }
 }
@@ -209,7 +256,7 @@ function __updateScreenShake(){
     const zoom_strength = Math.abs(Math.tan((m_progression / milliseconds_per_beat) * (Math.PI / 2)));
 
     if (intervalCamera === undefined)
-        camera.zoom = __camera.zoom + Math.min(0.1, zoom_strength / 100);
+        camera.zoom = __camera.zoom + Math.min(0.05, zoom_strength / 200);
     gray_wrapper.style.maxWidth = 900 + Math.min(60, zoom_strength * 10) + "px";
 }
 
@@ -410,7 +457,7 @@ function MainLoop(){
     scene_ctx.drawImage(bg_image, 0, 0);
     const p_sprite = pastek.getSprite();
     scene_ctx.drawImage(p_sprite, pastek.x, pastek.y);
-    scene_ctx.drawImage(guard_idle[0], 220, 80);
+    scene_ctx.drawImage(guard.getSprite(), guard.x, guard.y);
 
     if (button.active)
         scene_ctx.drawImage(button.img[button.index], button.x, button.y);
