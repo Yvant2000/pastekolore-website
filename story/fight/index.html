@@ -62,6 +62,8 @@ const __camera = {
 let intervalCamera = undefined;  // To store the interval of the camera movement
 
 const bg_music = new Audio();
+const metal_pipe_sound = new Audio();
+const bonk_sound = new Audio();
 const bg_loading = new Image();
 const bg_image = new Image();
 const pastek = {
@@ -117,6 +119,12 @@ guard.current = guard.anim.idle;
 
 bg_music.loop = true;
 bg_music.src = "./goofy-ahh-fight.mp3";
+metal_pipe_sound.src = "./metalpipe.mp3";
+metal_pipe_sound.preservesPitch = false;
+metal_pipe_sound.volume = 0.7;
+bonk_sound.src = "./bonk.mp3";
+bonk_sound.preservesPitch = false;
+bonk_sound.volume = 0.7;
 bg_loading.src = "./loading.png";
 bg_image.src = "./bg.png";
 pastek.anim.idle[0].src = "./pastek0.png";
@@ -189,6 +197,8 @@ function __pastekAttackAnimation(){
         return pastek.x += 2;
 
     if (pastek.x >= 150) {
+        metal_pipe_sound.playbackRate = 0.85 + Math.random()*0.3;
+        metal_pipe_sound.play();
         ZoomMoveCamera(1.8, 120, 0, 0.5);
         stopScreenShake();
         // set pastek animation to attack
@@ -216,6 +226,8 @@ function __guardAttackAnimation(){
         return guard.x -= 2;
 
     if (guard.x <= 100) {
+        bonk_sound.playbackRate = 0.9 + Math.random()*0.2;
+        bonk_sound.play();
         ZoomMoveCamera(1.8, -80, 0, 0.5);
         stopScreenShake();
         if (camera.zoom === 1.8) {
