@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>PastekoLore</title>
+    <link rel="stylesheet" href="/style.css" />
+    <script src="/utils.js"></script>
+</head>
+
+<body>
+<iframe src="/template.html" onload="this.before((this.contentDocument.body||this.contentDocument).children[0]);this.remove();
+    loadPage(
+        'Prévient la garde qu\'un des barreau est cassé.',
+        'Tu essaie de faire rentrer le garde dans la cellule en signalant le <del>tuyau</del> barreau cassé.<br><br>'+
+'Celui-ci ne réagit pas vraiment à la nouvelle :<br><br>'+
+'Il t\'explique que les barreaux ne sont pas là pour empêcher les prisonnier de s\'enfuir, mais pour éviter une chute accidentelle.<br><br>' +
+ 'A cette hauteur ce serait stupide d\'essayer de partir par la fenêtre, et comme tu as brisé le barreau toi même, c\'est ton problème à présent.<br><br>'+
+'Ta seconde tentative d\'attirer l\'attention du garde a encore échouée, mais tu sens que la troisième sera la bonne !<br><br>',
+        '> Propose au garde un soin du visage.'
+    )"></iframe>
+</body>
+</html>
