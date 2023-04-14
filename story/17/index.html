@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>PastekoLore</title>
+    <link rel="stylesheet" href="/style.css" />
+    <script src="/utils.js"></script>
+</head>
+
+<body>
+<iframe src="/template.html" onload="this.before((this.contentDocument.body||this.contentDocument).children[0]);this.remove();
+    loadPage(
+        'Combine le pot de fleur avec le Tuyeau en Métal.',
+        'Tu attrapes le <strong>Pot de Fleur</strong> et le <i>combine</i> avec le <strong>Tuyau en Métal</strong>.<br><br>'+
+'Tu <i>obtiens</i> une <strong>Épée de Fortune</strong> !<br><br>'+
+'Ce n\'est pas particulièrement utile, mais c\'est très stylé 😎',
+        '> Prévient la garde qu\'un des barreau est cassé.'
+    )"></iframe>
+</body>
+</html>
