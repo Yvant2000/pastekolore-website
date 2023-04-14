@@ -51,7 +51,7 @@ const scene_ctx = scene.getContext("2d");
 const __mouse_pos = {x: 0, y: 0};
 const mouse = {x: 0, y: 0, hover: false};
 
-const camera = {x: 0, y: 0, zoom: 1.0};
+const camera = {x: 0, y: 0, zoom: 1.0, anim: true};
 const __camera = {
     x: 0,
     y: 0,
@@ -190,11 +190,11 @@ function __pastekAttackAnimation(){
 
     if (pastek.x >= 150) {
         ZoomMoveCamera(1.8, 120, 0, 0.5);
-        stopScreenShake();
+        disableScreenZoomAnimation();
         // set pastek animation to attack
         if (camera.zoom === 1.8) {
             ZoomMoveCamera(1.0, 0, 0, 1.0);
-            startScreenShake();
+            enableScreenZoomAnimation();
             pastek.flip = true;
         }
     }
@@ -217,10 +217,10 @@ function __guardAttackAnimation(){
 
     if (guard.x <= 100) {
         ZoomMoveCamera(1.8, -80, 0, 0.5);
-        stopScreenShake();
+        disableScreenZoomAnimation();
         if (camera.zoom === 1.8) {
             ZoomMoveCamera(1.0, 0, 0, 1.0);
-            startScreenShake();
+            enableScreenZoomAnimation();
             guard.flip = true;
         }
     }
@@ -255,7 +255,7 @@ function __updateScreenShake(){
     const m_progression = progression * 1000; // convert to milliseconds
     const zoom_strength = Math.abs(Math.tan((m_progression / milliseconds_per_beat) * (Math.PI / 2)));
 
-    if (intervalCamera === undefined)
+    if (intervalCamera === undefined && camera.anim)
         camera.zoom = __camera.zoom + Math.min(0.05, zoom_strength / 200);
     gray_wrapper.style.maxWidth = 900 + Math.min(60, zoom_strength * 10) + "px";
 }
@@ -266,11 +266,20 @@ function startScreenShake(){
     intervalUpdateScreenShake = setInterval(__updateScreenShake, 20);
 }
 
-function stopScreenShake(){
-    if (intervalUpdateScreenShake === undefined)
-        return;
-    clearInterval(intervalUpdateScreenShake);
-    intervalUpdateScreenShake = undefined;
+// function stopScreenShake(){
+//     if (intervalUpdateScreenShake === undefined)
+//         return;
+//     clearInterval(intervalUpdateScreenShake);
+//     intervalUpdateScreenShake = undefined;
+// }
+
+
+function enableScreenZoomAnimation() {
+    camera.anim = true;
+}
+
+function disableScreenZoomAnimation() {
+    camera.anim = false;
 }
 
 
