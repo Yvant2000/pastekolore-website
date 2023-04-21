@@ -16,16 +16,15 @@
 <iframe src="/template.html" onload="
     this.before((this.contentDocument.body||this.contentDocument).children[0]);
     this.remove();
-
     loadPage(
         'Pastek : En garde!',
         'Clique sur <strong>START</strong> pour débuter.',
-        '==>'
+        ''
     );
     const img = document.getElementById('img');
     const canvas = document.getElementById('canvas');
-    img.parentNode.replaceChild(canvas, img);
     const next = document.getElementById('next');
+    img.parentNode.replaceChild(canvas, img);
     next.hidden = true;
     canvas.hidden = false;
 "></iframe>
@@ -33,77 +32,101 @@
 
 <script>
 
+// Class
+class Character {
+    anim = {
+        idle: [new Image(),],
+    };
+    x = 0;
+    y = 80;
+    index = 0;
+    current = undefined;
+    flip = false;
+    getSprite() {
+        if (this.index >= this.current.length) {
+            this.index = 0;
+            if (this.current === this.anim.attack) // attack animation is only played once
+                this.current = this.anim.idle;
+        }
+        return this.current[this.index];
+    }
+}
+
 // To assign later
 let wrapper;
 let gray_wrapper;
-let intervalWrapperSizeUp;
 
 
+// Constants
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 const canvas_style = window.getComputedStyle(canvas);
 
 const scene = document.createElement("canvas");
-scene.width = canvas.width;
-scene.height = canvas.height;
 const scene_ctx = scene.getContext("2d");
 
 const __mouse_pos = {x: 0, y: 0};
-const mouse = {x: 0, y: 0, hover: false};
+const mouse = {
+    x: 0,
+    y: 0,
+    hover: false,
+    update() {
+        const rect = canvas.getBoundingClientRect();
+        const width = parseInt(canvas_style.width, 10);
+        const height = parseInt(canvas_style.height, 10);
+        this.x = canvas.width * (((__mouse_pos.x - rect.left) / width - 1/2) / camera.zoom + 1/2) + camera.x/camera.zoom;
+        this.y = canvas.height * (((__mouse_pos.y - rect.top) / height - 1/2) / camera.zoom + 1/2) + camera.y/camera.zoom;
+    }
+};
 
-const camera = {x: 0, y: 0, zoom: 1.0};
-const __camera = {
+const camera = {
     x: 0,
     y: 0,
     zoom: 1.0,
-    progression: 0.0,
-    start: {x: 0, y: 0, zoom: 1.0},
-}
-let intervalCamera = undefined;  // To store the interval of the camera movement
+    __camera: {
+        x: 0,
+        y: 0,
+        zoom: 1.0,
+        progression: 0.0,
+        start: {x: 0, y: 0, zoom: 1.0},
+    },
+    /**
+     * @param {number | undefined} _zoom
+     * @param {number | undefined} _shift_x
+     * @param {number | undefined} _shift_y
+     * @param {number | undefined} duration
+     */
+    move(_zoom = undefined, _shift_x = undefined, _shift_y = undefined, duration = 1.0){
+        // If the camera is already in the position, don't start animation
+        if((_zoom === undefined || _zoom === this.__camera.zoom)
+            && (_shift_x === undefined || _shift_x === this.__camera.x)
+            && (_shift_y === undefined || _shift_y === this.__camera.y))
+            return;
+
+        this.__camera.zoom = _zoom;
+        this.__camera.x = _shift_x;
+        this.__camera.y = _shift_y;
+        this.__camera.progression = 0.0;
+        this.__camera.start.x = camera.x;
+        this.__camera.start.y = camera.y;
+        this.__camera.start.zoom = camera.zoom;
+
+        if (intervalCamera !== undefined)  // If animation already running, don't start another one
+            clearInterval(__updateCameraMove);
+
+        intervalCamera = setInterval(__updateCameraMove, 20 * duration);
+    }
+};
 
 const bg_music = new Audio();
 const metal_pipe_sound = new Audio();
 const bonk_sound = new Audio();
 const bg_loading = new Image();
 const bg_image = new Image();
-const pastek = {
-    anim: {
-        idle: [new Image(),],
-    },
-    x: 30,
-    y: 80,
-    index: 0,
-    current: undefined,
-    flip: false,
-    getSprite(){
-        if (this.index >= this.current.length) {
-            this.index = 0;
-            if (this.current === this.anim.attack) // attack animation is only played once
-                this.current = this.anim.idle;
-        }
-        //js flip image
-        return this.current[this.index];
-    }
-}
-const guard = {
-    anim: {
-        idle: [new Image(),],
-    },
-    x: 220,
-    y: 80,
-    index: 0,
-    current: undefined,
-    flip: false,
-    getSprite(){
-        if (this.index >= this.current.length) {
-            this.index = 0;
-            if (this.current === this.anim.attack) // attack animation is only played once
-                this.current = this.anim.idle;
-        }
-        //js flip image
-        return this.current[this.index];
-    }
-}
+
+const pastek = new Character();
+const guard = new Character();
+
 const cursor = new Image();
 const button = {
     img: [new Image(),],
@@ -113,18 +136,61 @@ const button = {
     index: 0,
     right(){return this.x + this.img[this.index].width},
     bottom(){return this.y + this.img[this.index].height},
+    clickEvent() {
+        this.active = false;
+        switch (this.index)
+        {
+            default:
+                camera.move(1.0, 0, 0, 1.0);
+                paragraph.change("Tu lances une attaque sur le garde, assénant d'importants dégâts à celui-ci avec ton <strong>Épée de Fortune</strong>!");
+                intervalAttackAnimation = setInterval(__pastekAttackAnimation, 30);
+                break;
+        }
+    }
 }
+
+const paragraph = {
+    __next_paragraph: "",
+    __delete_text: false,
+    paragraph: undefined,
+
+    /**
+     * @param {string} newText
+     */
+    change(newText) {
+        if (intervalUpdateParagraph !== undefined)
+            return;
+        this.__next_paragraph = newText;
+        this.__delete_text = true;
+        intervalUpdateParagraph = setInterval(__updateParagraph, 20);
+    }
+}
+
+// Intervals
+let intervalCamera = undefined;  // To store the interval of the camera movement
+let intervalUpdateParagraph = undefined;
+let intervalUpdateScreenShake = undefined;
+let intervalMusicVolume = undefined;
+let intervalAttackAnimation = undefined;
+let intervalWrapperSizeUp = undefined;
+
+// Init
+scene.width = canvas.width;
+scene.height = canvas.height;
+
 pastek.current = pastek.anim.idle;
+pastek.x = 30;
 guard.current = guard.anim.idle;
+guard.x = 220;
 
 bg_music.loop = true;
 bg_music.src = "./goofy-ahh-fight.mp3";
 metal_pipe_sound.src = "./metalpipe.mp3";
 metal_pipe_sound.preservesPitch = false;
-metal_pipe_sound.volume = 0.7;
+metal_pipe_sound.volume = 0.8;
 bonk_sound.src = "./bonk.mp3";
 bonk_sound.preservesPitch = false;
-bonk_sound.volume = 0.7;
+bonk_sound.volume = 0.8;
 bg_loading.src = "./loading.png";
 bg_image.src = "./bg.png";
 pastek.anim.idle[0].src = "./pastek0.png";
@@ -133,27 +199,20 @@ guard.anim.idle[0].src = "./guard0.png";
 cursor.src = "./cursor.png";
 button.img[0].src = "./buttons/attack.png";
 
-let paragraph;
-let __next_paragraph = "";
-let __delete_text = false;
-let intervalUpdateParagraph = undefined;
-
-let intervalUpdateScreenShake = undefined;
-
 bg_music.volume = 0.0;
-let intervalMusicVolume = undefined;
 
-let intervalAttackAnimation = undefined;
+
+// events
 
 canvas.onclick = () => {
     if (bg_music.paused) { // init
         FadeInMusic();
-        ZoomMoveCamera(1.8, -80, 0);
-        paragraph = document.getElementById("paragraph")
+        camera.move(1.8, -80, 0);
+        paragraph.paragraph = document.getElementById("paragraph")
         wrapper = document.getElementById("white_wrapper");
         wrapper.style.maxWidth =  window.getComputedStyle(wrapper).maxWidth;
         gray_wrapper = document.getElementById("gray_wrapper");
-        changeParagraph("Le garde te bloque la sortie!<br><br>Il va falloir passer en force.");
+        paragraph.change("Le garde te bloque la sortie!<br><br>Il va falloir passer en force.");
         intervalWrapperSizeUp = setInterval(__sizeUpWrapper, 30);
         startScreenShake();
         return;
@@ -162,7 +221,7 @@ canvas.onclick = () => {
     if (button.active
         && (button.x <= mouse.x && mouse.x <= button.right())
         && (button.y <= mouse.y && mouse.y <= button.bottom()))
-        return __mouseClickEvent();
+        return button.clickEvent();
 };
 
 canvas.onmousemove = (evt) => {
@@ -178,40 +237,41 @@ canvas.onmouseout = () => {
     mouse.hover = false;
 }
 
-
+// functions
 
 function __pastekAttackAnimation(){
-    if (pastek.flip) {
+    if (pastek.flip) {  // TODO: change to use animation instead of flip
         if (pastek.x > 30)
             return pastek.x -= 2;
 
         clearInterval(intervalAttackAnimation);
         intervalAttackAnimation = setInterval(__guardAttackAnimation, 30);
-        changeParagraph("Oh non ! Le garde contre-attaque ! 😟😲😬<br><br>Que devrais-tu faire ?");
+        paragraph.change("Oh non ! Le garde contre-attaque ! 😟😲😬<br><br>Que devrais-tu faire ?");
         pastek.flip = false;
         pastek.x = 30;
         return;
     }
-    if (pastek.x < 150)
-        // set pastek animation to walk
-        return pastek.x += 2;
 
-    if (pastek.x >= 150) {
-        metal_pipe_sound.playbackRate = 0.85 + Math.random()*0.3;
-        metal_pipe_sound.play();
-        ZoomMoveCamera(1.8, 120, 0, 0.5);
-        stopScreenShake();
-        // set pastek animation to attack
-        if (camera.zoom === 1.8) {
-            ZoomMoveCamera(1.0, 0, 0, 1.0);
-            startScreenShake();
-            pastek.flip = true;
-        }
+    if (pastek.x < 150) {
+        // TODO: set pastek animation to walk
+        return pastek.x += 2;
     }
+
+    metal_pipe_sound.playbackRate = 0.85 + Math.random() * 0.3;
+    metal_pipe_sound.play();
+    camera.move(1.8, 120, 0, 0.5);
+    stopScreenShake();
+
+    if (camera.zoom !== 1.8)
+        return;
+
+    camera.move(1.0, 0, 0, 1.0);
+    startScreenShake();
+    pastek.flip = true;
 }
 
 function __guardAttackAnimation(){
-    if (guard.flip) {
+    if (guard.flip) { // TODO: change to use animation instead of flip
         if (guard.x < 220)
             return guard.x += 2;
 
@@ -222,53 +282,39 @@ function __guardAttackAnimation(){
         button.active = true;
         return;
     }
+
     if (guard.x > 100)
+        // TODO: Set guard anim to walk
         return guard.x -= 2;
 
-    if (guard.x <= 100) {
-        bonk_sound.playbackRate = 0.9 + Math.random()*0.2;
-        bonk_sound.play();
-        ZoomMoveCamera(1.8, -80, 0, 0.5);
-        stopScreenShake();
-        if (camera.zoom === 1.8) {
-            ZoomMoveCamera(1.0, 0, 0, 1.0);
-            startScreenShake();
-            guard.flip = true;
-        }
-    }
+    bonk_sound.playbackRate = 0.9 + Math.random() * 0.2;
+    bonk_sound.play();
+    camera.move(1.8, -80, 0, 0.5);
+    stopScreenShake();
+
+    if (camera.zoom !== 1.8)
+        return;
+
+    camera.move(1.0, 0, 0, 1.0);
+    startScreenShake();
+    guard.flip = true;
 }
 
-
-
-
-function __mouseClickEvent() {
-    button.active = false;
-    console.log("click");
-    switch (button.index) {
-        default:
-            ZoomMoveCamera(1.0, 0, 0, 1.0);
-            changeParagraph("Tu lances une attaque sur le garde, assénant d'importants dégâts à celui-ci avec ton <strong>Épée de Fortune</strong>!");
-            intervalAttackAnimation = setInterval(__pastekAttackAnimation, 30);
-            break;
-    }
-}
 
 function __updateScreenShake(){
     const progression = bg_music.currentTime;
 
-    // If the percutions aren't playing
+    // If the percs aren't playing
     if (progression < 6.0 || (16.4 < progression && progression < 17.9) || (23.8 < progression && progression < 25.4)
-        || (71.2 < progression)) {
-        gray_wrapper.style.maxWidth = "900px";
-        return;
-    }
+        || (71.2 < progression))
+        return gray_wrapper.style.maxWidth = "900px";
 
     const milliseconds_per_beat = 375;
     const m_progression = progression * 1000; // convert to milliseconds
     const zoom_strength = Math.abs(Math.tan((m_progression / milliseconds_per_beat) * (Math.PI / 2)));
 
     if (intervalCamera === undefined)
-        camera.zoom = __camera.zoom + Math.min(0.05, zoom_strength / 200);
+        camera.zoom = camera.__camera.zoom + Math.min(0.05, zoom_strength / 200);
     gray_wrapper.style.maxWidth = 900 + Math.min(60, zoom_strength * 10) + "px";
 }
 
@@ -300,9 +346,9 @@ function __sizeUpWrapper() {
 function __updateParagraph() {
     let length = paragraph.innerHTML.length;
 
-    if (__delete_text) {
+    if (paragraph.__delete_text) {
         if (length <= 0)
-            return __delete_text = false;
+            return paragraph.__delete_text = false;
 
         let next = paragraph.innerHTML;
         if (next[next.length - 1] === ">")
@@ -312,33 +358,22 @@ function __updateParagraph() {
         return paragraph.innerHTML = next.slice(0, -2);
     }
 
-    if (length < __next_paragraph.length) {
-        if (__next_paragraph[length] === "<")
+    if (length < paragraph.__next_paragraph.length) {
+        if (paragraph.__next_paragraph[length] === "<")
             // noinspection StatementWithEmptyBodyJS
-            while (__next_paragraph[length++] !== ">");  // this syntax while increment one more time after the loop is over
-        return paragraph.innerHTML = __next_paragraph.slice(0, length + 1);
+            while (paragraph.__next_paragraph[length++] !== ">");  // this syntax while increment one more time after the loop is over
+        return paragraph.innerHTML = paragraph.__next_paragraph.slice(0, length + 1);
     }
 
     clearInterval(intervalUpdateParagraph);
     intervalUpdateParagraph = undefined;
 }
 
-/**
- * @param {string} newText
- */
-function changeParagraph(newText) {
-    if (intervalUpdateParagraph !== undefined)
-        return;
-    __next_paragraph = newText;
-    __delete_text = true;
-    intervalUpdateParagraph = setInterval(__updateParagraph, 20);
-}
-
 
 function __increaseMusicVolume(){
     try {
         bg_music.volume += 0.015; // Fading Music
-    } catch {
+    } catch {  // exception is caught when volume is higher than 1.0
         bg_music.volume = 1;
         clearInterval(intervalMusicVolume);
         intervalMusicVolume = undefined;
@@ -347,13 +382,20 @@ function __increaseMusicVolume(){
 
 
 /**
- * @param {number} x
- * @return {number}
+ * Ease function for lerp application
+ * @param {number} x Value between 0.0 and 1.0
+ * @return {number} Value between 0.0 and 1.0
  */
 function easeInOutCubic(x) {
     return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
 }
 
+/**
+ * @param {number} a Base value
+ * @param {number} b End value
+ * @param {number} t Value between 0.0 and 1.0
+ * @return {number} Value between a and b
+ */
 function lerp(a, b, t) {
     return a + (b - a) * t;
 }
@@ -361,61 +403,25 @@ function lerp(a, b, t) {
 
 function __updateCameraMove() {
 
-    __camera.progression += 0.02;
+    camera.__camera.progression += 0.02;
 
-    if (__camera.progression >= 1.0){
-        if (__camera.zoom !== undefined)
-            camera.zoom = __camera.zoom;
-        if (__camera.x !== undefined)
-            camera.x = __camera.x;
-        if (__camera.y !== undefined)
-            camera.y = __camera.y;
+    if (camera.__camera.progression >= 1.0){
+        if (camera.__camera.zoom !== undefined)
+            camera.zoom = camera.__camera.zoom;
+        if (camera.__camera.x !== undefined)
+            camera.x = camera.__camera.x;
+        if (camera.__camera.y !== undefined)
+            camera.y = camera.__camera.y;
         clearInterval(intervalCamera);
         return intervalCamera = undefined;
     }
 
-    if (__camera.zoom !== undefined)
-        camera.zoom = lerp(__camera.start.zoom, __camera.zoom, easeInOutCubic(__camera.progression));
-    if (__camera.x !== undefined)
-        camera.x = lerp(__camera.start.x, __camera.x, easeInOutCubic(__camera.progression));
-    if (__camera.y !== undefined)
-        camera.y = lerp(__camera.start.y, __camera.y, easeInOutCubic(__camera.progression));
-
-    /*
-        camera.zoom += (__camera.zoom - camera.zoom) * __camera.progression;
-        camera.x += (__camera.x - camera.x) * __camera.progression;
-        camera.y += (__camera.y - camera.y) * __camera.progression;
-     */
-}
-
-/**
- * @param {number | undefined} _zoom
- * @param {number | undefined} _shift_x
- * @param {number | undefined} _shift_y
- * @param {number | undefined} duration
- */
-function ZoomMoveCamera(_zoom = undefined, _shift_x = undefined, _shift_y = undefined, duration = 1.0){
-
-    console.log("called " + _zoom + " " + _shift_x + " " + _shift_y +" " + duration );
-
-    // If the camera is already in the position, don't start animation
-    if((_zoom === undefined || _zoom === __camera.zoom)
-        && (_shift_x === undefined || _shift_x === __camera.x)
-        && (_shift_y === undefined || _shift_y === __camera.y))
-        return;
-
-    __camera.zoom = _zoom;
-    __camera.x = _shift_x;
-    __camera.y = _shift_y;
-    __camera.progression = 0.0;
-    __camera.start.x = camera.x;
-    __camera.start.y = camera.y;
-    __camera.start.zoom = camera.zoom;
-
-    if (intervalCamera !== undefined)  // If animation already running, don't start another one
-        clearInterval(__updateCameraMove);
-
-    intervalCamera = setInterval(__updateCameraMove, 20 * duration);
+    if (camera.__camera.zoom !== undefined)
+        camera.zoom = lerp(camera.__camera.start.zoom, camera.__camera.zoom, easeInOutCubic(camera.__camera.progression));
+    if (camera.__camera.x !== undefined)
+        camera.x = lerp(camera.__camera.start.x, camera.__camera.x, easeInOutCubic(camera.__camera.progression));
+    if (camera.__camera.y !== undefined)
+        camera.y = lerp(camera.__camera.start.y, camera.__camera.y, easeInOutCubic(camera.__camera.progression));
 }
 
 function FadeInMusic() {
@@ -447,27 +453,26 @@ function updateScreen(){
     const new_height = height * camera.zoom;
 
     ctx.drawImage(
-        scene, width / 2 - new_width / 2 - camera.x, height / 2 - new_height / 2 - camera.y, new_width, new_height );
+        scene,
+        width / 2 - new_width / 2 - camera.x,
+        height / 2 - new_height / 2 - camera.y,
+        new_width,
+        new_height
+    );
 }
 
-
-function updateMousePos() {
-    const rect = canvas.getBoundingClientRect();
-    const true_width = parseInt(canvas_style.width, 10);
-    const true_height = parseInt(canvas_style.height, 10);
-    mouse.x = canvas.width * (((__mouse_pos.x - rect.left) / true_width - 1/2) / camera.zoom + 1/2) + camera.x/camera.zoom;
-    mouse.y = canvas.height * (((__mouse_pos.y - rect.top) / true_height - 1/2) / camera.zoom + 1/2) + camera.y/camera.zoom;
-}
 
 function animateImages() {
-    pastek.index++;
+    // noinspection BadExpressionStatementJS
+    pastek.index+++ ++guard.index;  // Get mad Guido van Rossum
 }
 
 
 function MainLoop(){
 
-    scene_ctx.drawImage(bg_image, 0, 0);
     const p_sprite = pastek.getSprite();
+
+    scene_ctx.drawImage(bg_image, 0, 0);
     scene_ctx.drawImage(p_sprite, pastek.x, pastek.y);
     scene_ctx.drawImage(guard.getSprite(), guard.x, guard.y);
 
@@ -477,7 +482,7 @@ function MainLoop(){
     drawTransparentImage(bg_loading, 0, 0, 1.0 - bg_music.volume);  // Fading image
 
     if (mouse.hover){
-        updateMousePos();
+        mouse.update();
         scene_ctx.drawImage(cursor, mouse.x, mouse.y, cursor.width / camera.zoom, cursor.height / camera.zoom)
     }
 
