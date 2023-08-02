@@ -111,8 +111,8 @@ const button = {
     y: 70,
     active: true,
     index: 0,
-    right(){return this.x + this.img[this.index].width},
-    bottom(){return this.y + this.img[this.index].height},
+    right(){return this.x + this.img[0].width},
+    bottom(){return this.y + this.img[0].height},
 }
 pastek.current = pastek.anim.idle;
 guard.current = guard.anim.idle;
@@ -242,13 +242,13 @@ function __guardAttackAnimation(){
 
 
 function __mouseClickEvent() {
+    ZoomMoveCamera(1.0, 0, 0, 1.0);
+    intervalAttackAnimation = setInterval(__pastekAttackAnimation, 30);
     button.active = false;
-    console.log("click");
-    switch (button.index) {
+    switch (button.index){
         default:
-            ZoomMoveCamera(1.0, 0, 0, 1.0);
+        case 0:
             changeParagraph("Tu lances une attaque sur le garde, assénant d'importants dégâts à celui-ci avec ton <strong>Épée de Fortune</strong>!");
-            intervalAttackAnimation = setInterval(__pastekAttackAnimation, 30);
             break;
     }
 }
