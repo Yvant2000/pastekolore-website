@@ -48,9 +48,21 @@ class Character {
         if (this.index >= this.current.length) {
             this.index = 0;
             if (this.current === this.anim.attack) // attack animation is only played once
-                this.current = this.anim.idle;
+                this.setAnimationIdle();
         }
         return this.current[this.index];
+    }
+    setAnimationAttack(){
+        this.current = this.anim.attack;
+        this.index = 0;
+    }
+    setAnimationHeal(){
+        this.current = this.anim.heal;
+        this.index = 0;
+    }
+    setAnimationIdle(){
+        this.current = this.anim.idle;
+        this.index = 0;
     }
 }
 
@@ -133,7 +145,7 @@ const cursor = new Image();
 const button = {
     img: [new Image(),],
     x: 85,
-    y: 70,
+    y: 400,
     active: true,
     index: 0,
     right(){return this.x + this.img[this.index].width},
@@ -143,8 +155,18 @@ const button = {
         switch (this.index)
         {
             default:
-                camera.move(1.0, 0, 0, 1.0);
-                paragraph.change("Tu lances une attaque sur le garde, assénant d'importants dégâts à celui-ci avec ton <strong>Épée de Fortune</strong>!");
+                paragraph.change(
+                    "Tu lances une attaque sur le garde, " +
+                    "assénant d'importants dégâts à celui-ci avec ton <strong>Épée de Fortune</strong>!" +
+                    "                                                              ");
+                pastek.setAnimationAttack();
+
+                metal_pipe_sound.playbackRate = 0.85 + Math.random() * 0.3;
+                metal_pipe_sound.play();
+                const camera_zoom = 1.4;
+                camera.move(camera_zoom, 300, 0, 0.5);
+                stopScreenShake();
+
                 intervalAttackAnimation = setInterval(__pastekAttackAnimation, 30);
                 break;
         }
@@ -157,15 +179,16 @@ const health_bars = {
     guard_img: new Image(),
     pastek: 100,
     guard: 100,
+    y: -200,
     display(ctx) {
-        ctx.drawImage(this.img, 0, 0);
+        ctx.drawImage(this.img, 0, this.y);
 
         const pastek_width = 185 + (this.pastek / 100) * (725 - 185);
-        ctx.drawImage(this.pastek_img, 0, 0, pastek_width, this.pastek_img.height, 0, 0, pastek_width, this.pastek_img.height);
+        ctx.drawImage(this.pastek_img, 0, 0, pastek_width, this.pastek_img.height, 0, this.y, pastek_width, this.pastek_img.height);
 
         const guard_max_width = 1735 - 1185;
         const ta_gueule = 1735 - (this.guard / 100) * guard_max_width;
-        ctx.drawImage(this.guard_img, ta_gueule, 0, guard_max_width, this.guard_img.height, ta_gueule, 0, guard_max_width, this.guard_img.height);
+        ctx.drawImage(this.guard_img, ta_gueule, 0, guard_max_width, this.guard_img.height, ta_gueule, this.y, guard_max_width, this.guard_img.height);
     }
 };
 
@@ -183,7 +206,11 @@ const paragraph = {
         this.__next_paragraph = newText;
         this.__delete_text = true;
         intervalUpdateParagraph = setInterval(__updateParagraph, 20);
-    }
+    },
+
+    isChanging() {
+        return intervalUpdateParagraph !== undefined;
+    },
 }
 
 // Intervals
@@ -193,6 +220,7 @@ let intervalUpdateScreenShake = undefined;
 let intervalMusicVolume = undefined;
 let intervalAttackAnimation = undefined;
 let intervalWrapperSizeUp = undefined;
+let intervalHealthBarAnimation = undefined;
 
 // Init
 scene.width = canvas.width;
@@ -233,14 +261,14 @@ for (let i = 10000; i < 10021; i++)
 {
     const img = new Image();
     img.src = "./Pastek/Attack/0" + i + ".png";
-    pastek.anim.heal.push(img);
+    pastek.anim.attack.push(img);
 }
 
 for (let i = 10000; i < 10027; i++)
 {
     const img = new Image();
     img.src = "./Pastek/Heal/0" + i + ".png";
-    pastek.anim.attack.push(img);
+    pastek.anim.heal.push(img);
 }
 
 for (let i = 10000; i < 10023; i++)
@@ -254,7 +282,7 @@ for (let i = 10000; i < 10024; i++)
 {
     const img = new Image();
     img.src = "./Garde/Attack/0" + i + ".png";
-    guard.anim.heal.push(img);
+    guard.anim.attack.push(img);
 }
 
 
@@ -270,7 +298,9 @@ canvas.onclick = () => {
     if (bg_music.paused) { // init
         FadeInMusic();
 
-        camera.move(1.0, -0, 0);  // TODO
+        camera.move(1.4, -300, 100);
+
+        intervalHealthBarAnimation = setInterval(__healthBarAnimation, 10);
 
         paragraph.paragraph = document.getElementById("paragraph")
         wrapper = document.getElementById("white_wrapper");
@@ -303,61 +333,90 @@ canvas.onmouseout = () => {
 
 // functions
 
-function __pastekAttackAnimation(){
-    if (pastek.flip) {  // TODO: change to use animation instead of flip
-        if (pastek.x > 30)
-            return pastek.x -= 2;
+function __healthBarAnimation(){
+    if (health_bars.y < 0)
+    {
+        return health_bars.y += 3;
+    }
 
+    clearInterval(intervalHealthBarAnimation);
+    intervalHealthBarAnimation = undefined;
+}
+
+function __pastekAttackAnimation(){
+    if (pastek.flip) {
+        if (paragraph.isChanging())
+        {
+            return;
+        }
+
+        guard.setAnimationAttack();
         clearInterval(intervalAttackAnimation);
         intervalAttackAnimation = setInterval(__guardAttackAnimation, 30);
-        paragraph.change("Oh non ! Le garde contre-attaque ! 😟😲😬<br><br>Que devrais-tu faire ?");
+
+        paragraph.change("Oh non ! Le garde contre-attaque ! 😟😲😬                               ");
         pastek.flip = false;
-        pastek.x = 30;
+
         return;
     }
 
-    if (pastek.x < 150) {
-        // TODO: set pastek animation to walk
-        return pastek.x += 2;
+    if (pastek.index < 10)
+    {
+        return;
     }
 
-    metal_pipe_sound.playbackRate = 0.85 + Math.random() * 0.3;
-    metal_pipe_sound.play();
-    camera.move(1.8, 120, 0, 0.5);
-    stopScreenShake();
+    camera.move(1.0, 0, 0, 0.5);
 
-    if (camera.zoom !== 1.8)
-        return;
-
-    camera.move(1.0, 0, 0, 1.0);
     startScreenShake();
+    health_bars.guard -= 0.6;
+
+    if (pastek.current === pastek.anim.attack)
+    {
+        return;
+    }
+
     pastek.flip = true;
 }
 
 function __guardAttackAnimation(){
-    if (guard.flip) { // TODO: change to use animation instead of flip
-        if (guard.x < 220)
-            return guard.x += 2;
+    if (guard.flip) {
+        if (paragraph.isChanging())
+        {
+            return;
+        }
+
+        paragraph.change("Que devrais-tu faire ?")
 
         clearInterval(intervalAttackAnimation);
         intervalAttackAnimation = undefined;
         guard.flip = false;
-        guard.x = 220;
+
         button.active = true;
         return;
     }
 
-    if (guard.x > 100)
-        // TODO: Set guard anim to walk
-        return guard.x -= 2;
 
-    bonk_sound.playbackRate = 0.9 + Math.random() * 0.2;
-    bonk_sound.play();
-    camera.move(1.8, -80, 0, 0.5);
+    camera.move(1.2, -250, 80);
+
+    if (guard.index < 12)
+    {
+        return;
+    }
+
+    if (guard.index === 12 && guard.current === guard.anim.attack)
+    {
+        bonk_sound.playbackRate = 0.9 + Math.random() * 0.2;
+        bonk_sound.play();
+    }
+
     stopScreenShake();
 
-    if (camera.zoom !== 1.8)
+    health_bars.pastek -= 0.8;
+
+    if(guard.current === guard.anim.attack)
+    {
         return;
+    }
 
     camera.move(1.0, 0, 0, 1.0);
     startScreenShake();
@@ -526,6 +585,8 @@ function updateScreen(){
         new_width,
         new_height
     );
+
+    health_bars.display(ctx);
 }
 
 
@@ -541,12 +602,10 @@ function MainLoop(){
     const g_sprite = guard.getSprite();
 
     scene_ctx.drawImage(bg_image, 0, 0);
-    scene_ctx.drawImage(p_sprite, pastek.x, pastek.y);
     scene_ctx.drawImage(g_sprite, guard.x, guard.y);
+    scene_ctx.drawImage(p_sprite, pastek.x, pastek.y);
 
-    health_bars.display(scene_ctx);
-
-    if (button.active)
+    if (button.active && paragraph.isChanging() === false)
         scene_ctx.drawImage(button.img[button.index], button.x, button.y);
 
     drawTransparentImage(bg_loading, 0, 0, 1.0 - bg_music.volume);  // Fading image
