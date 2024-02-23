@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>PastekoLore</title>
+    <link rel="stylesheet" href="/style.css" />
+    <script src="/utils.js"></script>
+</head>
+
+<body>
+<iframe src="/template.html" onload="this.before((this.contentDocument.body||this.contentDocument).children[0]);this.remove();
+    loadPage(
+        'Victoire !',
+        'Après un combat acharné qui t\'as semblé interminable, le garde est enfin vaincu.<br><br>'
+        + 'Malheureusement, le garde pourrait peut-être (théoriquement ?) se réveiller à tout instant (enfin pas tout de suite quand même).<br><br>' +
+         'Il vaudrait mieux partir d\'ici au plus vite.<br>' +
+         'Reste t-il quelques chose à faire dans ta cellule avant de t\'en aller définitivement ?',
+        ''
+    )"></iframe>
+</body>
+</html>

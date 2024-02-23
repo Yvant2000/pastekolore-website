@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>PastekoLore</title>
+    <link rel="stylesheet" href="/style.css" />
+    <script src="/utils.js"></script>
+</head>
+
+<body>
+<iframe src="/template.html" onload="this.before((this.contentDocument.body||this.contentDocument).children[0]);this.remove();
+    loadPage(
+        'Prepare toi à te battre.',
+        'La porte finit <strong>enfin</strong> de s\'ouvrir (après seulement un an de suspense intense). ' +
+         'Les charnières devaient être rouillées <del>et ça n\'a rien à voir avec l\'incompétence d\'un quelconque dessinateur</del>' +
+         '<br><br> Tu te prépares à faire face à ton premier adversaire :<br> <strong>Le Garde</strong>.',
+        'Pastek : En garde!'
+    )"></iframe>
+</body>
+</html>
